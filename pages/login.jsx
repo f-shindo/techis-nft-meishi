@@ -1,12 +1,32 @@
-import { ConnectWallet, useAddress, Web3Button } from "@thirdweb-dev/react";
+import {
+  ConnectWallet,
+  useAddress,
+  Web3Button,
+  useContract,
+  useNFT,
+  ThirdwebNftMedia,
+  useUser,
+} from "@thirdweb-dev/react";
 import Link from "next/link";
 import styles from "../styles/Home.module.css";
+import { useRef } from "react";
+import { useRouter } from "next/router";
 
 // replace this with your contract address
-const contractAddress = "0x1fCbA150F05Bbe1C9D21d3ab08E35D682a4c41bF";
+const contractAddress = "0x975772F9A465699A0D9e384c4EAa4488270870E6";
 
 export default function Login() {
   const address = useAddress(); // Get the user's address
+  const { contract } = useContract(contractAddress);
+  const { data: nft, isLoading } = useNFT(contract, 0);
+  const { isLoggedIn } = useUser();
+  const router = useRouter();
+  const prevIsLoggedInRef = useRef(isLoggedIn);
+
+  if (prevIsLoggedInRef.current === false && isLoggedIn === true) {
+    router.push("/");
+  }
+  prevIsLoggedInRef.current = isLoggedIn;
 
   return (
     <div className={styles.container}>
@@ -16,9 +36,9 @@ export default function Login() {
         using{" "}
         <b>
           <a
-            href="https://portal.thirdweb.com/building-web3-apps/authenticating-users"
-            target="_blank"
-            rel="noopener noreferrer"
+            href='https://portal.thirdweb.com/building-web3-apps/authenticating-users'
+            target='_blank'
+            rel='noopener noreferrer'
             className={styles.purple}
           >
             Auth
@@ -29,7 +49,7 @@ export default function Login() {
 
       <p className={styles.explain}>
         You cannot access the{" "}
-        <Link className={styles.purple} href="/">
+        <Link className={styles.purple} href='/'>
           main page
         </Link>{" "}
         unless you own an NFT from our collection!
@@ -46,16 +66,23 @@ export default function Login() {
           <p>Please connect your wallet to continue.</p>
         )}
 
-        <ConnectWallet accentColor="#F213A4" />
+        <ConnectWallet accentColor='#F213A4' />
 
         <p>
           For demo purposes, you can claim an NFT from our collection below:
         </p>
 
+        <div>
+          {!isLoading && nft ? (
+            <ThirdwebNftMedia metadata={nft.metadata} />
+          ) : (
+            <p>Loading...</p>
+          )}
+        </div>
         <Web3Button
           contractAddress={contractAddress}
           action={(contract) => contract.erc1155.claim(0, 1)}
-          accentColor="#F213A4"
+          accentColor='#F213A4'
         >
           Claim NFT
         </Web3Button>
